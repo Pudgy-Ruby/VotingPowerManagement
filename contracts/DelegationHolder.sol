@@ -4,27 +4,36 @@ pragma solidity 0.8.19;
 import "./interfaces/IInst.sol";
 
 contract DelegationHolder {
-    IInst public inst;
-    address public delegatee;
+    IInst public immutable inst;
     address public splitter;
 
-    function initialize(IInst _inst) external {
+    /**
+     * @dev Thrown when non-splitter address calls functions
+     */
+    error OnlySplitterCanCall();
+
+    /**
+     * @dev Thrown when token transfer failed
+     */
+    error TokenTransferFailed();
+
+    constructor(IInst _inst) {
         inst = _inst;
         splitter = msg.sender;
     }
 
     function withdrawTokens(uint256 amount) external {
         if (msg.sender != splitter) {
-            revert IInst.OnlySplitterCanCall();
+            revert OnlySplitterCanCall();
         }
         if (!inst.transfer(msg.sender, amount)) {
-            revert IInst.TokenTransferFailed();
+            revert TokenTransferFailed();
         }
     }
 
     function delegate(address newDelegatee) external {
         if (msg.sender != splitter) {
-            revert IInst.OnlySplitterCanCall();
+            revert OnlySplitterCanCall();
         }
         IInst(inst).delegate(newDelegatee);
     }
